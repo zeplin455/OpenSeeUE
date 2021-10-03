@@ -161,7 +161,7 @@ class OPENSEETRACKING_API FUDPMessenger
 {
 public:
 
-	TFunction<void(FOpenSeeTrackingData, const FString&)> OnReceivedBytes;
+	TFunction<void(FOpenSeeTrackingData, const FString&)> OnReceivedData;
 	TFunction<void(int32 Port)> OnReceiveOpened;
 	TFunction<void(int32 Port)> OnReceiveClosed;
 	TFunction<void(int32 SpecifiedPort, int32 BoundPort)> OnSendOpened;
@@ -203,8 +203,6 @@ class OPENSEETRACKING_API UOpenSeeComponent : public UActorComponent
 
 public:	
 	UOpenSeeComponent();
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OpenSeeUE")
-		int32 MovingAverage = 3;
 
 	UPROPERTY(BlueprintAssignable, Category = "OpenSeeUE")
 		FUDPMessageSig OnReceivedBytes;
@@ -241,8 +239,6 @@ public:
 
 protected:
 	TSharedPtr<FUDPMessenger> Native;
-	TArray<FOpenSeeTrackingData> TrackingBuffer;
-	int BufferCount = 0;
 
 	void LinkupCallbacks();
 	// Called when the game starts

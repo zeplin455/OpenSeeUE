@@ -352,159 +352,9 @@ void UOpenSeeComponent::LinkupCallbacks()
 		Settings.bIsReceiveOpen = false;
 		OnReceiveSocketClosed.Broadcast(Port);
 	};
-	Native->OnReceivedBytes = [this](const FOpenSeeTrackingData& Data, const FString& Endpoint)
+	Native->OnReceivedData = [this](const FOpenSeeTrackingData& Data, const FString& Endpoint)
 	{
-		int bufferNum = TrackingBuffer.Num();
-		if (bufferNum < MovingAverage)
-		{
-			TrackingBuffer.Add(Data);
-			bufferNum++;
-		}
-		else
-		{
-			TrackingBuffer[BufferCount] = Data;
-			BufferCount++;
-			if (BufferCount >= bufferNum)
-			{
-				BufferCount = 0;
-			}
-		}
-
-		FOpenSeeTrackingData finalData;
-
-		finalData.confidence = Data.confidence;
-		finalData.cameraResolution = Data.cameraResolution;
-		finalData.got3DPoints = Data.got3DPoints;
-		finalData.id = Data.id;
-		finalData.nPoints = Data.nPoints;
-		finalData.time = Data.time;
-
-		FVector4 quatAvg;
-		FQuat first = TrackingBuffer[0].rawQuaternion;
-		finalData.rawQuaternion = first;
-
-		for (int i = 0; i < bufferNum; ++i)
-		{
-			if (i > 0)
-			{
-				finalData.rawQuaternion = AverageQuaternion(quatAvg, TrackingBuffer[i].rawQuaternion, first, i);
-			}
-			finalData.translation.X += TrackingBuffer[i].translation.X;
-			finalData.translation.Y += TrackingBuffer[i].translation.Y;
-			finalData.translation.Z += TrackingBuffer[i].translation.Z;
-
-			finalData.fit3DError += Data.fit3DError;
-
-			finalData.leftEyeOpen += Data.leftEyeOpen;
-			finalData.rightEyeOpen += Data.rightEyeOpen;
-
-			int setNum2d = finalData.points.Num();
-			int points2dCount = Data.points.Num();
-
-			if (setNum2d <= 0)
-			{
-				for (int k = 0; k < points2dCount; ++k)
-				{
-					finalData.points.Add(Data.points[k]);
-				}
-			}
-			else
-			{
-				for (int k = 0; k < points2dCount; ++k)
-				{
-					finalData.points[k].X += Data.points[k].X;
-					finalData.points[k].Y += Data.points[k].Y;
-				}
-			}
-
-			if (Data.got3DPoints)
-			{
-				int setNum3d = finalData.points3D.Num();
-				int points3dCount = Data.points3D.Num();
-
-				if (setNum3d <= 0)
-				{
-					for (int k = 0; k < points3dCount; ++k)
-					{
-						finalData.points3D.Add(Data.points3D[k]);
-					}
-				}
-				else
-				{
-					for (int k = 0; k < points3dCount; ++k)
-					{
-						finalData.points3D[k].X += Data.points3D[k].X;
-						finalData.points3D[k].Y += Data.points3D[k].Y;
-						finalData.points3D[k].Z += Data.points3D[k].Z;
-					}
-				}
-			}
-
-			finalData.features.EyebrowQuirkLeft += TrackingBuffer[i].features.EyebrowQuirkLeft;
-			finalData.features.EyebrowQuirkRight += TrackingBuffer[i].features.EyebrowQuirkRight;
-			finalData.features.EyebrowSteepnessLeft += TrackingBuffer[i].features.EyebrowSteepnessLeft;
-			finalData.features.EyebrowSteepnessRight += TrackingBuffer[i].features.EyebrowSteepnessRight;
-			finalData.features.EyebrowUpDownLeft += TrackingBuffer[i].features.EyebrowUpDownLeft;
-			finalData.features.EyebrowUpDownRight += TrackingBuffer[i].features.EyebrowUpDownRight;
-			finalData.features.EyeLeft += TrackingBuffer[i].features.EyeLeft;
-			finalData.features.EyeRight += TrackingBuffer[i].features.EyeRight;
-			finalData.features.MouthCornerInOutLeft += TrackingBuffer[i].features.MouthCornerInOutLeft;
-			finalData.features.MouthCornerInOutRight += TrackingBuffer[i].features.MouthCornerInOutRight;
-			finalData.features.MouthCornerUpDownLeft += TrackingBuffer[i].features.MouthCornerUpDownLeft;
-			finalData.features.MouthCornerUpDownRight += TrackingBuffer[i].features.MouthCornerUpDownRight;
-			finalData.features.MouthOpen += TrackingBuffer[i].features.MouthOpen;
-			finalData.features.MouthWide += TrackingBuffer[i].features.MouthWide;
-		}
-
-		finalData.translation.X /= MovingAverage;
-		finalData.translation.Y /= MovingAverage;
-		finalData.translation.Z /= MovingAverage;
-
-		finalData.fit3DError /= MovingAverage;
-
-		finalData.leftEyeOpen /= MovingAverage;
-		finalData.rightEyeOpen /= MovingAverage;
-
-		int points2dCount = finalData.points.Num();
-
-		for (int k = 0; k < points2dCount; ++k)
-		{
-			finalData.points[k].X /= MovingAverage;
-			finalData.points[k].Y /= MovingAverage;
-		}
-
-
-		if (Data.got3DPoints)
-		{
-			int points3dCount = finalData.points3D.Num();
-
-			for (int k = 0; k < points3dCount; ++k)
-			{
-				finalData.points3D[k].X /= MovingAverage;
-				finalData.points3D[k].Y /= MovingAverage;
-				finalData.points3D[k].Z /= MovingAverage;
-			}
-		}
-
-		finalData.features.EyebrowQuirkLeft /= MovingAverage;
-		finalData.features.EyebrowQuirkRight /= MovingAverage;
-		finalData.features.EyebrowSteepnessLeft /= MovingAverage;
-		finalData.features.EyebrowSteepnessRight /= MovingAverage;
-		finalData.features.EyebrowUpDownLeft /= MovingAverage;
-		finalData.features.EyebrowUpDownRight /= MovingAverage;
-		finalData.features.EyeLeft /= MovingAverage;
-		finalData.features.EyeRight /= MovingAverage;
-		finalData.features.MouthCornerInOutLeft /= MovingAverage;
-		finalData.features.MouthCornerInOutRight /= MovingAverage;
-		finalData.features.MouthCornerUpDownLeft /= MovingAverage;
-		finalData.features.MouthCornerUpDownRight /= MovingAverage;
-		finalData.features.MouthOpen /= MovingAverage;
-		finalData.features.MouthWide /= MovingAverage;
-
-
-		finalData.rawEuler = finalData.rawQuaternion.Euler();
-
-		OnReceivedBytes.Broadcast(finalData, Endpoint);
+		OnReceivedBytes.Broadcast(Data, Endpoint);
 	};
 }
 
@@ -695,7 +545,7 @@ bool FUDPMessenger::OpenReceiveSocket(const FString& InListenIP /*= TEXT("0.0.0.
 
 	UDPReceiver->OnDataReceived().BindLambda([this](const FArrayReaderPtr& DataPtr, const FIPv4Endpoint& Endpoint)
 		{
-			if (!OnReceivedBytes)
+			if (!OnReceivedData)
 			{
 				return;
 			}
@@ -714,15 +564,15 @@ bool FUDPMessenger::OpenReceiveSocket(const FString& InListenIP /*= TEXT("0.0.0.
 				AsyncTask(ENamedThreads::GameThread, [this, openSee, SenderIp]()
 					{
 						//double check we're still bound on this thread
-						if (OnReceivedBytes)
+						if (OnReceivedData)
 						{
-							OnReceivedBytes(openSee, SenderIp);
+							OnReceivedData(openSee, SenderIp);
 						}
 					});
 			}
 			else
 			{
-				OnReceivedBytes(openSee, SenderIp);
+				OnReceivedData(openSee, SenderIp);
 			}
 		});
 
@@ -770,7 +620,7 @@ void FUDPMessenger::ClearSendCallbacks()
 
 void FUDPMessenger::ClearReceiveCallbacks()
 {
-	OnReceivedBytes = nullptr;
+	OnReceivedData = nullptr;
 	OnReceiveOpened = nullptr;
 	OnReceiveClosed = nullptr;
 }
