@@ -54,7 +54,7 @@ public:
 	int nPoints = 68;
 	double time;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OpenSeeUE")
-		int id = 0;
+		int32 id = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OpenSeeUE")
 		FVector2D cameraResolution;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OpenSeeUE")
