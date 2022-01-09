@@ -148,12 +148,6 @@ struct OPENSEETRACKING_API FUDPNetworkSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OpenSeeUE")
 		bool bReceiveDataOnGameThread;
 
-	UPROPERTY(BlueprintReadOnly, Category = "OpenSeeUE")
-		bool bIsReceiveOpen;
-
-	UPROPERTY(BlueprintReadOnly, Category = "OpenSeeUE")
-		bool bIsSendOpen;
-
 	FUDPNetworkSettings();
 };
 
@@ -164,23 +158,14 @@ public:
 	TFunction<void(FOpenSeeTrackingData, const FString&)> OnReceivedData;
 	TFunction<void(int32 Port)> OnReceiveOpened;
 	TFunction<void(int32 Port)> OnReceiveClosed;
-	TFunction<void(int32 SpecifiedPort, int32 BoundPort)> OnSendOpened;
-	TFunction<void(int32 Port)> OnSendClosed;
 
 	FUDPNetworkSettings Settings;
 
 	FUDPMessenger();
 	~FUDPMessenger();
 
-	int32 OpenSendSocket(const FString& InIP = TEXT("127.0.0.1"), const int32 InPort = 3000);
-	bool CloseSendSocket();
-
-	bool EmitBytes(const TArray<uint8>& Bytes);
-
 	bool OpenReceiveSocket(const FString& InIP = TEXT("127.0.0.1"), const int32 InListenPort = 11573);
 	bool CloseReceiveSocket();
-
-	void ClearSendCallbacks();
 	void ClearReceiveCallbacks();
 
 protected:
@@ -205,7 +190,7 @@ public:
 	UOpenSeeComponent();
 
 	UPROPERTY(BlueprintAssignable, Category = "OpenSeeUE")
-		FUDPMessageSig OnReceivedBytes;
+		FUDPMessageSig OnReceivedTrackingInfo;
 
 	UPROPERTY(BlueprintAssignable, Category = "OpenSeeUE")
 		FUDPSocketStateSig OnReceiveSocketOpened;
@@ -213,29 +198,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "OpenSeeUE")
 		FUDPSocketStateSig OnReceiveSocketClosed;
 
-	UPROPERTY(BlueprintAssignable, Category = "OpenSeeUE")
-		FUDPSocketSendStateSig OnSendSocketOpened;
-
-	UPROPERTY(BlueprintAssignable, Category = "OpenSeeUE")
-		FUDPSocketStateSig OnSendSocketClosed;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OpenSeeUE")
 		FUDPNetworkSettings Settings;
-
-	UFUNCTION(BlueprintCallable, Category = "OpenSeeUE")
-		int32 OpenSendSocket(const FString& InIP = TEXT("127.0.0.1"), const int32 InPort = 3000);
-
-	UFUNCTION(BlueprintCallable, Category = "OpenSeeUE")
-		bool CloseSendSocket();
 
 	UFUNCTION(BlueprintCallable, Category = "OpenSeeUE")
 		bool OpenReceiveSocket(const FString& InListenIP = TEXT("127.0.0.1"), const int32 InListenPort = 11573);
 
 	UFUNCTION(BlueprintCallable, Category = "OpenSeeUE")
 		bool CloseReceiveSocket();
-
-	UFUNCTION(BlueprintCallable, Category = "OpenSeeUE")
-		bool EmitBytes(const TArray<uint8>& Bytes);
 
 protected:
 	TSharedPtr<FUDPMessenger> Native;
